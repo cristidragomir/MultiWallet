@@ -1,0 +1,7 @@
+# Ignore
+.dockerignore
+.env
+Dockerfile
+db-init.sql
+pgadmin_conf.json
+multi-wallet.yml

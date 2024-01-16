@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "MultiWalletServer",
+            "Group": "Servers",
+            "Host": "db_container",
+            "Port": 5432,
+            "MaintenanceDB": "multi-wallet-db",
+            "Username": "postgres",
+            "SSLMode": "prefer",
+            "PassFile": "/tmp/pgpassfile"
+        }
+    }
+}
