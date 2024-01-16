@@ -1,0 +1,5 @@
+flask
+psycopg2
+git+https://git@github.com/multiversx/mx-sdk-py-core.git#egg=multiversx_sdk_core
+git+https://git@github.com/multiversx/mx-sdk-py-wallet.git#egg=multiversx_sdk_wallet
+git+https://git@github.com/multiversx/mx-sdk-py-network-providers.git#egg=multiversx_sdk_network_providers
