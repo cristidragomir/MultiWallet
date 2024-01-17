@@ -1,1 +1,56 @@
-<p>landing-page works!</p>
+<div style="text-align: center;padding-top: 30px;justify-content: center; padding-bottom: 20px">
+    <button mat-icon-button class="mat-medium-fab" (click)="goToProfile()" style="margin-right: 20%;">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+    
+      <span class="example-spacer"></span>
+      <button mat-icon-button class="mat-medium-fab" (click)="openSendDialog()">
+        <mat-icon>arrow_upward</mat-icon>
+      </button>
+</div>
+
+<mat-card>
+    <mat-card-title *ngIf="isFirstTimeUser" style="text-align:center; font-size:x-large; padding-top: 30px; padding-bottom: 30px">Welcome to MultiWallet</mat-card-title>
+    <mat-card-title *ngIf="!isFirstTimeUser" style="text-align:center; font-size:x-large; padding-top: 30px; padding-bottom: 30px">Welcome back</mat-card-title>
+    <mat-card-content style="text-align: center;" fxLayoutAlign="space-around center">
+
+    </mat-card-content>
+    <div fxLayout="row" fxLayoutAlign="start center"v style="padding-top: 10%;">
+        <mat-form-field style="width: 200px; text-align: left; padding-left: 20px; margin-right: 10px;">
+          <mat-select [(value)]="selectedOption">
+            <mat-option *ngFor="let option of dropdownOptions" [value]="option.value">
+              {{ option.viewValue }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-raised-button (click)="openWalletDialog()" style="background-color: cornflowerblue" class="buy-button">Add wallet +</button>
+    </div>
+
+    <table mat-table [dataSource]="dataSource" style="padding-left: 10%;padding-right:10%; padding-top: 10%">
+
+        <!-- ID Column -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let transaction">{{ transaction.id }}</td>
+        </ng-container>
+
+        <!-- Description Column -->
+        <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let transaction">{{ transaction.description }}</td>
+        </ng-container>
+      
+        <!-- Amount Column -->
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Amount</th>
+          <td mat-cell *matCellDef="let transaction">{{ transaction.amount }}</td>
+        </ng-container>
+      
+        
+      
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      
+</mat-card>

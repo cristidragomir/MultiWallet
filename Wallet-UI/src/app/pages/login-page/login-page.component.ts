@@ -3,6 +3,7 @@ import { SocialAuthService } from "@abacritt/angularx-social-login";
 import { Router } from '@angular/router';
 import { SocialUser } from "@abacritt/angularx-social-login";
 import { GoogleLoginProvider } from "@abacritt/angularx-social-login";
+import { LoginService } from '../../services/login-service/login.service';
 
 declare const gapi: any;
 
@@ -12,7 +13,7 @@ declare const gapi: any;
   styleUrls: ['./login-page.component.css']
 })
 export class LoginPageComponent implements OnInit,AfterViewInit {
-  username: string;
+  email: string;
   password: string;
   user: SocialUser | undefined;
   loggedIn: boolean;
@@ -21,9 +22,10 @@ export class LoginPageComponent implements OnInit,AfterViewInit {
   constructor(
     private socialAuthService: SocialAuthService,
     private router: Router,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    // private loginService: LoginService,
   ) {
-    this.username = '';
+    this.email = '';
     this.password = '';
     this.loggedIn = false;
   }
@@ -38,13 +40,13 @@ export class LoginPageComponent implements OnInit,AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    gapi.load('auth2', () => {
-      const auth2 = gapi.auth2.init({
-        client_id: '622882092746-sirv7ner8d5hl35021e0q4j91clqilim.apps.googleusercontent.com',
-        cookiepolicy: 'single_host_origin',
-      });
-      this.attachSignin(document.getElementById('customBtn'), auth2);
-    });
+    // gapi.load('auth2', () => {
+    //   const auth2 = gapi.auth2.init({
+    //     client_id: '622882092746-sirv7ner8d5hl35021e0q4j91clqilim.apps.googleusercontent.com',
+    //     cookiepolicy: 'single_host_origin',
+    //   });
+    //   this.attachSignin(document.getElementById('customBtn'), auth2);
+    // });
   }
 
   attachSignin(element: any, auth2: any) {
@@ -78,7 +80,17 @@ export class LoginPageComponent implements OnInit,AfterViewInit {
 
   login() {
     console.log('Login clicked');
-    this.router.navigate(['create-account']);
+    const loginData = { email: this.email, password: this.password };
+    localStorage.setItem('firstTimeUser', 'false');
+    // this.loginService.sendLoginData(loginData).subscribe(
+    //   (response) => {
+    //     console.log('Login successful:', response);
+    //   },
+    //   (error) => {
+    //     console.error('Login failed:', error);
+    //   }
+    // );
+    this.router.navigate(['home']);
   }
 
   loginWithGoogle(): void {

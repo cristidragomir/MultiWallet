@@ -1,1 +1,26 @@
-<p>create-account-page works!</p>
+<mat-card>
+    <mat-card-title style="text-align:center; font-size:x-large; padding-top: 30px; padding-bottom: 30px">Create a MultiWallet account</mat-card-title>
+    <mat-card-content style="text-align: center;" fxLayoutAlign="space-around center">
+      <mat-form-field>
+        <mat-label>User</mat-label>
+        <input matInput type="text">
+      </mat-form-field>
+      <br>
+      <mat-form-field>
+        <mat-label>Email</mat-label>
+        <input matInput type="email">
+      </mat-form-field>
+      <br>
+      <mat-form-field>
+        <mat-label>Password</mat-label>
+        <input matInput type="password">
+      </mat-form-field>
+      <br>
+      <div style="padding-top: 20px;">
+        <button (click)="createAccount()" mat-raised-button style="width: 20%;margin-right: 30px;">Create</button>
+        <button (click)="createAccountloginWithGoogle()" mat-raised-button class="google-login-btn">Google
+        </button>
+      </div>
+
+    </mat-card-content>
+</mat-card>
