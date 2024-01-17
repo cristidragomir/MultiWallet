@@ -1,30 +1,15 @@
--- create table Tari (
---  id serial primary key,
---  nume_tara varchar(50),
---  latitudine double precision,
---  longitudine double precision
--- );
-
--- create table Orase (
--- id serial primary key,
--- id_tara int,
--- nume_oras varchar(50),
--- latitudine double precision,
--- longitudine double precision,
--- constraint fk_tara foreign key(id_tara) references Tari(id) on delete cascade on update cascade);
-
--- create table Temperaturi (
--- id serial primary key,
--- valoare double precision,
--- timestamp timestamp DEFAULT CURRENT_TIMESTAMP,
--- id_oras int,
--- constraint fk_oras foreign key(id_oras) references orase(id) on delete cascade on update cascade);
-
--- alter table Tari add unique (nume_tara);
--- alter table Orase add constraint OraseConstraint unique (id_tara, nume_oras);
--- alter table Temperaturi add constraint TempConstraint unique (id_oras, timestamp);
-
-create table Test (
+create table Users (
     id serial primary key,
-    msg_input varchar(255)
-)
+    email varchar(255),
+    username varchar(255),
+    hashed_password varchar(100)
+);
+
+create table Wallet (
+    id serial primary key,
+    w_name varchar(255),
+    w_address varchar(255),
+    w_type varchar(10), -- MX or ETH
+    owner_id int,
+    constraint fk_user foreign key(owner_id) references Users(id) on delete cascade on update cascade
+);
