@@ -1,0 +1,44 @@
+.landing-page {
+    text-align: center;
+    margin: 20px;
+}
+  
+.total-sold {
+    font-size: 18px;
+    color: blue;
+    cursor: pointer;
+    margin-top: 10px;
+}
+  
+.transaction-list {
+    margin-top: 20px;
+}
+
+mat-card {
+    margin-right: auto;
+    margin-left: 35%;
+    text-align: center;
+    width: 30%;
+}
+
+::ng-deep .mat-select-arrow-wrapper::after {
+    content: '';
+    border-style: solid;
+    border-width: 0.25em 0.25em 0; 
+    border-color: #000 transparent transparent; 
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+}
+
+.buy-button {
+    align-self: flex-end;
+    font-family: sans-serif;
+    font-size: medium;
+    border: none;
+    padding: 15px 25px 15px 25px;
+    border-radius: 50px;
+    margin-left: 15%;
+    background-color: cornflowerblue;
+}
+  

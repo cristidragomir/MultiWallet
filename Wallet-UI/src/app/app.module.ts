@@ -11,17 +11,28 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { SocialLoginModule, SocialAuthServiceConfig } from '@abacritt/angularx-social-login';
 import { GoogleLoginProvider } from '@abacritt/angularx-social-login';
 import {  GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
+import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatListModule } from '@angular/material/list';
+import { MatTableModule } from '@angular/material/table';
+import { WalletPopupComponent } from './components/wallet-popup/wallet-popup.component';
+import { SendPopupComponent } from './components/send-popup/send-popup.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginPageComponent,
     CreateAccountPageComponent,
-    LandingPageComponent
+    LandingPageComponent,
+    ProfilePageComponent,
+    WalletPopupComponent,
+    SendPopupComponent
   ],
   imports: [
     BrowserModule,
@@ -30,11 +41,16 @@ import {  GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
     MatCardModule,
     MatInputModule,
     MatButtonModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     FormsModule,
     SocialLoginModule,
-    GoogleSigninButtonModule
+    GoogleSigninButtonModule,
+    MatToolbarModule,
+    MatSelectModule,
+    MatListModule,
+    MatTableModule
   ],
   providers:  [
     {
