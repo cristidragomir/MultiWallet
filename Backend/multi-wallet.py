@@ -19,6 +19,7 @@ from multiversx_sdk_network_providers import ApiNetworkProvider
 from multiversx_sdk_wallet import Mnemonic
 from multiversx_sdk_wallet import UserWallet
 from multiversx_sdk_wallet import UserSigner
+from multiversx_sdk_core import Transaction
 from multiversx_sdk_core import TokenComputer, TokenPayment, TransactionComputer
 from multiversx_sdk_core.transaction_factories import TransferTransactionsFactory
 from multiversx_sdk_core.transaction_factories import TransactionsFactoryConfig
@@ -240,7 +241,7 @@ def getMXWalletTransactions():
     cnt = 0
     for item in transactions:
         cnt += 1
-        amnt = item.value / (10 ** EGLD_NUM_DECIMALS)
+        amnt = int(item.value) / (10 ** EGLD_NUM_DECIMALS)
         list_elem = {
                 "hash":item.hash,
                 "nonce": item.nonce,
@@ -270,7 +271,7 @@ def sendEGLD():
     connection = connectToDb()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT id, hashed_password FROM Users WHERE email = %s", (s_username, ))
+    cursor.execute("SELECT id, hashed_password FROM Users WHERE username = %s", (s_username, ))
     user_id, hashed_password = cursor.fetchone()
     hashed_password = bytes(hashed_password)
 
@@ -287,7 +288,7 @@ def sendEGLD():
     s_user_id = cursor.fetchone()
 
     cursor.execute("SELECT w_address FROM Wallet WHERE w_type = 'MX' and owner_id = %s AND w_name = %s", (s_user_id, s_w_name,))
-    s_erd_address = cursor.fetchone()
+    s_erd_address = cursor.fetchone()[0]
 
     cursor.close()
     connection.close() 
@@ -312,15 +313,19 @@ def sendEGLD():
             secret_key = UserWallet.decrypt_secret_key(key_file_object, password)
         signer = UserSigner(secret_key)
 
-    transaction = transfer_factory.create_transaction_for_native_token_transfer(
-         sender=sender_addr,
-         receiver=recv_addr,
-         native_amount= TokenPayment.egld_from_amount(amount),
-         data=description
+    transaction = Transaction(
+        sender=s_erd_address,
+        receiver=receiver,
+        gas_limit=50000,
+        chain_id="T",
+        value=TokenPayment.egld_from_amount(amount)
     )
 
+    transaction.nonce = multiversx_provider.get_account(sender_addr).nonce
     transaction.signature = signer.sign(TransactionComputer().compute_bytes_for_signing(transaction))
-    multiversx_provider.send_transaction(transaction)
+    hash = multiversx_provider.send_transaction(transaction)
+
+    print(hash)
 
     return Response(status=200)
 
