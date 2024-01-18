@@ -55,6 +55,7 @@ export class LandingPageComponent implements OnInit {
 
   openWalletDialog() {
     const dialogRef = this.dialog.open(WalletPopupComponent, {
+      width: '30%',
     });
 
     dialogRef.afterClosed().subscribe(result => {
