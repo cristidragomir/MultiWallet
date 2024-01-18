@@ -17,8 +17,8 @@ export class LandingPageComponent implements OnInit {
   isFirstTimeUser: boolean = false;
   dropdownOptions = [
     { value: 'option1', viewValue: 'Ethereum' },
-    { value: 'option2', viewValue: 'Option 2' },
-    { value: 'option3', viewValue: 'Option 3' }
+    { value: 'option2', viewValue: 'NewWallet1' },
+    { value: 'option3', viewValue: 'NewWallet2' }
   ];
 
   displayedColumns: string[] = ['description', 'amount'];
