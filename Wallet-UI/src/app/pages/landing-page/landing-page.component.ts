@@ -16,15 +16,15 @@ export class LandingPageComponent implements OnInit {
   transactions: Transaction[] = [];
   isFirstTimeUser: boolean = false;
   dropdownOptions = [
-    { value: 'option1', viewValue: 'Option 1' },
+    { value: 'option1', viewValue: 'Ethereum' },
     { value: 'option2', viewValue: 'Option 2' },
     { value: 'option3', viewValue: 'Option 3' }
   ];
 
   displayedColumns: string[] = ['description', 'amount'];
   dataSource: Transaction[] = [
-    { id: 1, description: 'Some description for Item 1.', amount: 100 },
-    { id: 2, description: 'Some description for Item 2.' , amount: 150},
+    { id: 1, description: '3d7dd0f8e3f7822840003c00eb09a9f', amount: 1.82 },
+    { id: 2, description: 'bc81bf46e1e3cf963f3c69ceebce087' , amount: 30},
   ];
 
   selectedOption: string | undefined;
