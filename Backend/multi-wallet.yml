@@ -38,17 +38,6 @@ services:
         - pgadmin_network
         - db_network
 
-  # rest_api:
-  #   build: .
-  #   container_name: ${REST_API_CONTAINER_NAME}
-  #   ports: 
-  #     - "6000:6000" 
-  #   depends_on:
-  #     - db
-  #   networks:
-  #     - rest_api_network
-  #     - db_network
-
 networks:
   db_network:
     external: false
