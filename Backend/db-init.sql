@@ -2,7 +2,7 @@ create table Users (
     id serial primary key,
     email varchar(255),
     username varchar(255),
-    hashed_password bytea
+    hashed_password bytea,
     session_token varchar(30)
 );
 

@@ -201,8 +201,8 @@ def getMXWalletDetails():
     cursor.execute("SELECT id FROM Users WHERE username = %s", (sentJsonToServer['username'],))
     user_id = cursor.fetchone()
 
-    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = MX and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name'],))
-    erd_address = cursor.fetchone()
+    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = 'MX' and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name']))
+    erd_address = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
@@ -227,8 +227,8 @@ def getMXWalletTransactions():
     cursor.execute("SELECT id FROM Users WHERE username = %s", (sentJsonToServer['username'],))
     user_id = cursor.fetchone()
 
-    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = MX and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name'],))
-    erd_address = cursor.fetchone()
+    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = 'MX' and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name'],))
+    erd_address = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
@@ -270,7 +270,7 @@ def sendEGLD():
     connection = connectToDb()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT id, hashed_password FROM Users WHERE email = %s", (received_email,))
+    cursor.execute("SELECT id, hashed_password FROM Users WHERE email = %s", (s_username, ))
     user_id, hashed_password = cursor.fetchone()
     hashed_password = bytes(hashed_password)
 
@@ -286,7 +286,7 @@ def sendEGLD():
     cursor.execute("SELECT id FROM Users WHERE username = %s", (s_username,))
     s_user_id = cursor.fetchone()
 
-    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = MX and owner_id = %s AND w_name = %s", (s_user_id, s_w_name,))
+    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = 'MX' and owner_id = %s AND w_name = %s", (s_user_id, s_w_name,))
     s_erd_address = cursor.fetchone()
 
     cursor.close()
@@ -369,7 +369,7 @@ def createEthereumWallet():
 
     wallet_json = {
         "address": acct.address,
-        "encrypted_private_key": encrypted_private_key
+        "encrypted_private_key": encrypted_private_key.decode('utf-8')
     }
 
     # insert into the database minimal data
@@ -434,8 +434,8 @@ def getEthWalletDetails():
     cursor.execute("SELECT id FROM Users WHERE username = %s", (sentJsonToServer['username'],))
     user_id = cursor.fetchone()
 
-    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = ETH and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name'],))
-    eth_address = cursor.fetchone()
+    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = 'ETH' and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name'],))
+    eth_address = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
@@ -466,8 +466,8 @@ def getEthWalletTransactions():
     cursor.execute("SELECT id FROM Users WHERE username = %s", (sentJsonToServer['username'],))
     user_id = cursor.fetchone()
 
-    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = ETH and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name'],))
-    eth_address = cursor.fetchone()
+    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = 'ETH' and owner_id = %s AND w_name = %s", (user_id, sentJsonToServer['wallet_name'],))
+    eth_address = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
@@ -480,7 +480,6 @@ def getEthWalletTransactions():
     response = requests.request("GET", url, headers=headers, data=payload)
 
     if response.status_code == 200:
-        # Return the JSON response from the Etherscan API
         response = response.json()
         transactions_list = response['result']
         list_to_forward = []
@@ -519,7 +518,7 @@ def sendETH():
     connection = connectToDb()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT id, hashed_password FROM Users WHERE email = %s", (received_email,))
+    cursor.execute("SELECT id, hashed_password FROM Users WHERE username = %s", (s_username,))
     user_id, hashed_password = cursor.fetchone()
     hashed_password = bytes(hashed_password)
 
@@ -537,8 +536,8 @@ def sendETH():
     cursor.execute("SELECT id FROM Users WHERE username = %s", (s_username,))
     s_user_id = cursor.fetchone()
 
-    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = ETH and owner_id = %s AND w_name = %s", (s_user_id, s_w_name,))
-    s_eth_address = cursor.fetchone()
+    cursor.execute("SELECT w_address FROM Wallet WHERE w_type = 'ETH' and owner_id = %s AND w_name = %s", (s_user_id, s_w_name,))
+    s_eth_address = cursor.fetchone()[0]
 
     cursor.close()
     connection.close()
@@ -546,7 +545,7 @@ def sendETH():
     sender_encrypted_private_key = 0
     if sentJsonToServer['uploaded_json'] == {}:
         # lookup in the server files
-        filename = 'ETH-' + s_erd_address + '.json'
+        filename = 'ETH-' + s_eth_address + '.json'
         with open(filename, 'r') as file:
             data = json.load(file)
         sender_encrypted_private_key = data['encrypted_private_key']
@@ -555,19 +554,23 @@ def sendETH():
         sender_encrypted_private_key = sentJsonToServer['uploaded_json']['encrypted_private_key']
 
     salt = provided_password.encode('utf-8')
-    sender_private_key = decrypt_message_with_password(sender_encrypted_private_key, password, salt) 
+    sender_private_key = decrypt_message_with_password(sender_encrypted_private_key.encode('utf-8'), provided_password, salt) 
+
+    # print(sender_private_key)
 
     transaction = {
         'to': receiver,
         'value': web3.to_wei(amount, 'ether'),
-        'gas': 21000,
+        'gas': 25000,
         'gasPrice': web3.to_wei('50', 'gwei'),
-        'nonce': web3.eth.get_transaction_count(s_eth_address),
-        'data': description
+        'nonce': web3.eth.get_transaction_count(s_eth_address)
+        # data: description.encode('utf-8')
     }
     
     signed_transaction = web3.eth.account.sign_transaction(transaction, sender_private_key)
     transaction_hash = web3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+    
+    print(transaction_hash)
 
     return Response(status=200)
 
@@ -599,8 +602,6 @@ def createUser():
 
 @app.route("/api/user/login", methods=["POST"])
 def loginUser():
-    # fields: [email, password]
-    # return rand_string to be a session token, to put into db
     sentJsonToServer = request.json
 
     required_fields = ['email', 'password']
@@ -636,6 +637,50 @@ def loginUser():
     connection.close()
     
     return jsonify({"session_token": session_token}), 200
+
+# General retrieval
+@app.route("/api/wallets", methods=["GET"])
+def returnWalletsForUser():
+    sentJsonToServer = request.json
+
+    required_fields = ['username']
+    if not all(field in sentJsonToServer for field in required_fields):
+        return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
+
+    connection = connectToDb()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id FROM Users WHERE username = %s", (sentJsonToServer['username'],))
+    user_id = cursor.fetchone()
+
+    query = """
+        SELECT Wallet.*
+        FROM Users
+        JOIN Wallet ON Users.id = Wallet.owner_id
+        WHERE Users.id = %s;
+    """
+
+    # Execute the query
+    cursor.execute(query, (user_id,))
+    wallets = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    # Print the results
+    cnt = 0
+    list_to_return = []
+    for wallet in wallets:
+        cnt += 1
+        # print(wallet)
+        elem = {
+            "name":wallet[1],
+            "address":wallet[2],
+            "type":wallet[3]
+        }
+        list_to_return.append(elem)
+
+    return jsonify({"number_of_wallets": cnt, "wallets":list_to_return}), 200
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=6000, debug=True)
