@@ -82,6 +82,7 @@ export class LoginPageComponent implements OnInit,AfterViewInit {
     console.log('Login clicked');
     const loginData = { email: this.email, password: this.password };
     localStorage.setItem('firstTimeUser', 'false');
+    localStorage.setItem('email', this.email);
     // this.loginService.sendLoginData(loginData).subscribe(
     //   (response) => {
     //     console.log('Login successful:', response);

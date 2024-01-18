@@ -64,6 +64,7 @@ export class LandingPageComponent implements OnInit {
 
   openSendDialog() {
     const dialogRef = this.dialog.open(SendPopupComponent, {
+      width: '30%',
     });
 
     dialogRef.afterClosed().subscribe(result => {

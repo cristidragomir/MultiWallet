@@ -23,6 +23,10 @@ export class CreateAccountPageComponent {
   createAccount() {
     const accountData = { email: this.email, password: this.password, user: this.user};
     localStorage.setItem('firstTimeUser', 'true');
+    localStorage.setItem('email', this.email);
+    if (this.user !== undefined) {
+      localStorage.setItem('user', this.user?.toString());
+    }
     this.router.navigate(['home']);
     // this.createAccountService.sendNewAccountData(accountData).subscribe(
     //     (response) => {
