@@ -4,6 +4,7 @@ import bcrypt
 import json
 import os
 from pathlib import Path
+from cryptography.fernet import Fernet
 
 # Flask imports
 
@@ -31,6 +32,13 @@ from web3.middleware import geth_poa_middleware
 from eth_account import Account
 import secrets
 
+# Cryptography imports
+
+import base64
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
 
 # MultiversX global variables
 
@@ -51,6 +59,8 @@ def connectToDb():
         user="postgres", 
         password="docker")
 
+# password hashing
+
 def hash_password(password):
     # Generate a salt and hash the password
     salt = bcrypt.gensalt()
@@ -60,20 +70,31 @@ def hash_password(password):
 def verify_password(input_password, stored_hashed_password):
     return bcrypt.checkpw(input_password.encode('utf-8'), stored_hashed_password)
 
-@app.route("/api/test", methods=["POST"])
-def postCountry():
-    conn = connectToDb()
-    cur = conn.cursor()
-    
-    sentJsonToServer = request.json
-    codeToRet = 200
+# encrypt/decrypt methods
 
-    cur.execute("""INSERT INTO test(msg_input) values (%s)""", (sentJsonToServer['field'],))
-    conn.commit()
+def generate_key_from_password(password, salt, iterations=100000):
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,  # 256-bit key length
+        salt=salt,
+        iterations=iterations,
+        backend=default_backend()
+    )
+    key = kdf.derive(password.encode())
+    return key
 
-    cur.close()
-    conn.close()
-    return sentJsonToServer, codeToRet
+def encrypt_message_with_password(message, password, salt):
+    key = generate_key_from_password(password, salt)
+    cipher_suite = Fernet(base64.urlsafe_b64encode(key))
+    encrypted_message = cipher_suite.encrypt(message.encode())
+    return encrypted_message
+
+def decrypt_message_with_password(encrypted_message, password, salt):
+    key = generate_key_from_password(password, salt)
+    cipher_suite = Fernet(base64.urlsafe_b64encode(key))
+    decrypted_message = cipher_suite.decrypt(encrypted_message).decode()
+    return decrypted_message
+
 
 # MultiverseX endpoints
 
@@ -81,13 +102,26 @@ def postCountry():
 def createMultiversXWallet():
     sentJsonToServer = request.json
 
-    required_fields = ['password', 'user_mail']
+    required_fields = ['password', 'user_mail', 'wallet_name']
     if not all(field in sentJsonToServer for field in required_fields):
         return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
 
     provided_password = sentJsonToServer['password']
+    received_email = sentJsonToServer['user_mail']
+    w_name = sentJsonToServer['wallet_name']
 
-    # check if provided password is the one stored encrypted in our db for the user
+    connection = connectToDb()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id, hashed_password FROM Users WHERE email = %s", (received_email,))
+    user_id, hashed_password = cursor.fetchone()
+    hashed_password = bytes(hashed_password)
+
+    cursor.close()
+    connection.close()
+
+    if verify_password(provided_password, hashed_password) == False:
+        return jsonify({'error': 'Password provided is incorrect.'}), 400
 
     mnemonic = Mnemonic.generate()
     secret_key = mnemonic.derive_key(0)
@@ -95,22 +129,32 @@ def createMultiversXWallet():
     wallet_json_string = wallet.to_json(address_hrp="erd")
     wallet_json = json.loads(wallet_json_string)
 
-    return jsonify({"wallet_address":wallet_json['bech32'], "json_content":wallet_json}), 200
+    connection = connectToDb()
+    cursor = connection.cursor()
+
+    cursor.execute("INSERT INTO Wallet (w_name, w_address, w_type, owner_id) VALUES (%s, %s, %s, %s)",
+                       (w_name, wallet['bech32'], "MX", user_id))
+
+    # Commit the transaction
+    connection.commit()
+    
+    cursor.close()
+    connection.close()
+
+    return jsonify({"wallet_name": w_name, "json_content": wallet_json}), 200
 
 @app.route("/api/mx-wallet/store", methods=["POST"])
 def storeMXWallet():
+    # fields: [keep_wallet_json - boolean]
     sentJsonToServer = request.json
 
-    required_fields = ['address', 'bech32', 'crypto', 'id', 'kind', 'version']
-    if not all(field in sentJsonToServer for field in required_fields):
-        return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
+    # required_fields = ['address', 'bech32', 'crypto', 'id', 'kind', 'version']
+    # if not all(field in sentJsonToServer for field in required_fields):
+    #     return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
 
-    file_name = sentJsonToServer['bech32'] + ".json"
-    with open(file_name, 'w') as file:
-        file.write(json.dumps(sentJsonToServer))
-
-    # create a binding between db record and filename
-    # a table named WALLET with fields: id, bech32_address, hex_address, name, user_id
+    # file_name = "MX-" + sentJsonToServer['bech32'] + ".json"
+    # with open(file_name, 'w') as file:
+    #     file.write(json.dumps(sentJsonToServer))
 
     return Response(status=200)
 
@@ -159,6 +203,8 @@ def getMXWalletTransactions():
 def sendEGLD():
     sentJsonToServer = request.json
 
+    # Fields: [username, wallet-name, amount, password, receiver, uploaded_json:{}, description]
+
     required_fields = ['receiver', 'amount', 'password']
     if not all(field in sentJsonToServer for field in required_fields):
         return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
@@ -190,7 +236,7 @@ def sendEGLD():
 def createEthereumWallet():
     sentJsonToServer = request.json
 
-    required_fields = ['password', 'user_mail']
+    required_fields = ['password', 'user_mail', "wallet_name"]
     if not all(field in sentJsonToServer for field in required_fields):
         return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
 
@@ -198,12 +244,38 @@ def createEthereumWallet():
 
     # check if password is valid by checking bcrypt hash already stored in db when user created account
     # if not don't proceed
+    provided_password = sentJsonToServer['password']
+    received_email = sentJsonToServer['user_mail']
+    w_name = sentJsonToServer['wallet_name']
+
+    connection = connectToDb()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id, hashed_password FROM Users WHERE email = %s", (received_email,))
+    user_id, hashed_password = cursor.fetchone()
+    hashed_password = bytes(hashed_password)
+
+    cursor.close()
+    connection.close()
+
+    if verify_password(provided_password, hashed_password) == False:
+        return jsonify({'error': 'Password provided is incorrect.'}), 400
+
+    # password ok
+    salt = provided_password.encode('utf-8')
 
     priv = secrets.token_hex(32)
     private_key = "0x" + priv
     acct = Account.from_key(private_key)
 
-    return jsonify({"encrypted_private_key": private_key, "eth_address": acct.address}), 200
+    encrypted_private_key = encrypt_message_with_password(private_key, provided_password, salt)
+
+    # create a json file for the wallet
+    # add it in the database
+
+    wallet_json = "wallet_json"
+
+    return jsonify({"wallet_name": w_name, "json_content": wallet_json}), 200
 
 @app.route("/api/eth-wallet/store", methods=["POST"])
 def storeEthereumWallet():
@@ -226,7 +298,7 @@ def storeEthereumWallet():
 def getEthWalletDetails():
     sentJsonToServer = request.json
 
-    required_fields = ['eth_address']
+    required_fields = ['address']
     if not all(field in sentJsonToServer for field in required_fields):
         return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
 
@@ -311,21 +383,27 @@ def createUser():
     if not all(field in sentJsonToServer for field in required_fields):
         return jsonify({'error': 'Invalid JSON format. Missing required fields.'}), 400
 
-    hashed_password = hash_password(plaintext_password)
+    hashed_password = hash_password(sentJsonToServer['password'])
     username = sentJsonToServer['username']
     email = sentJsonToServer['email']
 
     connection = connectToDb()
     cursor = connection.cursor()
 
-    cursor.execute("INSERT INTO User (username, email, hashed_password) VALUES (%s, %s, %s)", (username, email, hashed_password))
+    cursor.execute("INSERT INTO Users (username, email, hashed_password) VALUES (%s, %s, %s)", (username, email, hashed_password))
     connection.commit()
 
     cursor.close()
     connection.close()
 
+    # return rand_string to be a session token, to put into db
     return Response(status=200)
 
+@app.route("api/user/login", methods=["POST"])
+def loginUser():
+    # fields: [email, password]
+    # return rand_string to be a session token, to put into db
+    return Response(status=200)
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=6000, debug=True)
