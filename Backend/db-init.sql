@@ -3,6 +3,7 @@ create table Users (
     email varchar(255),
     username varchar(255),
     hashed_password bytea
+    session_token varchar(30)
 );
 
 create table Wallet (
